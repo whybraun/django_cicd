@@ -1,29 +1,30 @@
-name: Автоматизация тестирования и развертывания проекта
+name: Тестирование и развертывание проекта
 
 on:
   push:
-    branches: [main]
+    branches:
+      - master
 
 jobs:
   tests:
     runs-on: ubuntu-22.04
     env:
-      SECRET: ${{ secrets.DJANGO_SECRET }}
-      DEBUG: ${{ secrets.DEBUG }}
-      ALLOWED_HOSTS: ${{ secrets.ALLOWED }}
-      DB_ENGINE: ${{ secrets.DB_ENGINE }}
-      DB_USER: ${{ secrets.DB_USER }}
-      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-      DB_NAME: ${{ secrets.DB_NAME }}
-      DB_HOST: ${{ secrets.DB_HOST }}
-      DB_PORT: ${{ secrets.DB_PORT }}
+      SECRET_VALUE: ${{ secrets.SECRET }}
+      DEBUG_MODE: ${{ secrets.DEBUG_MODE }}
+      ALLOWED: ${{ secrets.ALLOWED_HOSTS }}
+      ENGINE: ${{ secrets.DB_ENGINE }}
+      USER: ${{ secrets.DB_USER }}
+      PASSWORD: ${{ secrets.DB_PASSWORD }}
+      NAME: ${{ secrets.DB_NAME }}
+      HOST: ${{ secrets.DB_HOST }}
+      PORT: ${{ secrets.DB_PORT }}
     services:
-      postgres_db:
+      postgres_main:
         image: postgres:12
         env:
-          POSTGRES_DB: ${{ env.DB_NAME }}
-          POSTGRES_USER: ${{ env.DB_USER }}
-          POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
+          POSTGRES_DB: ${{ env.NAME }}
+          POSTGRES_USER: ${{ env.USER }}
+          POSTGRES_PASSWORD: ${{ env.PASSWORD }}
         ports:
           - 5432:5432
         options:
@@ -32,29 +33,37 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - name: Проверка наличия изменений в репозитории
-        uses: actions/checkout@v3
+      - name: Проверяем репозиторий на наличие изменений
+        uses: actions/checkout@v4
 
-      - name: Установка python и создание окружения
-        uses: actions/setup-python@v3
+      - name: Установка python и окружения
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.9
+          python-version: "3.10"
 
-      - name: Установка зависимостей
+      - name: Установка библиотек
         run: pip install -r requirements.txt
-      
+
       - name: Линтинг
-        run: flake8 logistic/ --exclude logistic/migrations
-      
+        run: flake8 logistic/ --exclude=logistic/migrations/
+
       - name: Тестирование
         run: python manage.py test
         env:
-          SECKRET_KET: ${{ env.SECKRET_KET }}
-          DEBUG: ${{ env.DEBUG }}
-          ALLOWED_HOSTS: ${{ env.ALLOWED_HOSTS }}
-          DB_ENGINE: ${{ env.DB_ENGINE }}
-          DB_USER: ${{ env.DB_USER }}
-          DB_PASSWORD: ${{ env.DB_PASSWORD }}
-          DB_NAME: ${{ env.DB_NAME }}
-          DB_HOST: ${{ env.DB_HOST }}
-          DB_PORT: ${{ env.DB_PORT }}
+          SECRET_KEY: ${{ env.SECRET_VALUE }}
+          DEBUG: ${{ env.DEBUG_MODE }}
+          ALLOWED_HOSTS: ${{ env.ALLOWED }}
+          DB_ENGINE: ${{ env.ENGINE }}
+          DB_NAME: ${{ env.NAME }}
+          DB_USER: ${{ env.USER }}
+          DB_PASSWORD: ${{ env.PASSWORD }}
+          DB_HOST: ${{ env.HOST }}
+          DB_PORT: ${{ env.PORT }}
+
+      - name: Деплой
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: expect /home/user/django_cicd/deploy.exp
