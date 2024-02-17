@@ -60,10 +60,10 @@ jobs:
           DB_HOST: ${{ env.HOST }}
           DB_PORT: ${{ env.PORT }}
 
-      - name: Деплой
-        uses: appleboy/ssh-action@main
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          script: expect /home/user/django_cicd/deploy.exp
+      # - name: Деплой
+      #   uses: appleboy/ssh-action@main
+      #   with:
+      #     host: ${{ secrets.SSH_HOST }}
+      #     username: ${{ secrets.SSH_USER }}
+      #     password: ${{ secrets.SSH_PASSWORD }}
+      #     script: expect /home/user/django_cicd/deploy.exp
