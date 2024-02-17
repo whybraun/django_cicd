@@ -42,4 +42,3 @@ class StockSerializer(serializers.ModelSerializer):
                 defaults=defaults
             )
         return stock
-
